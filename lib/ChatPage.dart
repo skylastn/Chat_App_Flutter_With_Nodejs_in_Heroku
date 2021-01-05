@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
+import 'package:socket_io_client/socket_io_client.dart';
 
 class ChatPage extends StatefulWidget {
   @override
@@ -11,10 +12,15 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   SocketIO socketIO;
+  Socket socket2;
   List<String> messages;
   double height, width;
   TextEditingController textController;
   ScrollController scrollController;
+
+  _socketStatus(dynamic data) {
+    print("Socket status: " + data);
+  }
 
   @override
   void initState() {
@@ -23,21 +29,16 @@ class _ChatPageState extends State<ChatPage> {
     //Initializing the TextEditingController and ScrollController
     textController = TextEditingController();
     scrollController = ScrollController();
-    //Creating the socket
-    socketIO = SocketIOManager().createSocketIO(
-      'https://chatappsahid.herokuapp.com',
-      '/',
-    );
+    // Creating the socket
 
-    // socketIO = SocketIOManager().createSocketIO(
-    //   'https://real-chat-1234.herokuapp.com',
-    //   '/',
-    // );
-    //Call init before doing anything with socket
-    socketIO.init();
-    //Subscribe to an event to listen to
-    socketIO.subscribe('receive_message', (jsonData) {
-      //Convert the JSON data received into a Map
+    socket2 = io('https://chatappsahid.herokuapp.com', <String, dynamic>{
+      'transports': ['websocket'],
+      'autoConnect': true,
+      'extraHeaders': {'foo': 'bar'} // optional
+    });
+    socket2.connect();
+
+    socket2.on('receive_message', (jsonData) {
       Map<String, dynamic> data = json.decode(jsonData);
       this.setState(() => messages.add(data['message']));
       scrollController.animateTo(
@@ -46,8 +47,29 @@ class _ChatPageState extends State<ChatPage> {
         curve: Curves.ease,
       );
     });
+    socket2.onConnect((data) => print("Connected"));
+
+    // socketIO = SocketIOManager().createSocketIO(
+    //   'https://chatappsahid.herokuapp.com/',
+    //   '/',
+    //     socketStatusCallback: _socketStatus
+    // );
+
+    //Call init before doing anything with socket
+    // socketIO.init();
+    //Subscribe to an event to listen to
+    // socketIO.subscribe('receive_message', (jsonData) {
+    //   //Convert the JSON data received into a Map
+    //   Map<String, dynamic> data = json.decode(jsonData);
+    //   this.setState(() => messages.add(data['message']));
+    //   scrollController.animateTo(
+    //     scrollController.position.maxScrollExtent,
+    //     duration: Duration(milliseconds: 600),
+    //     curve: Curves.ease,
+    //   );
+    // });
     //Connect to the socket
-    socketIO.connect();
+    // socketIO.connect();
     super.initState();
   }
 
@@ -104,9 +126,19 @@ class _ChatPageState extends State<ChatPage> {
         //Check if the textfield has text or not
         if (textController.text.isNotEmpty) {
           //Send the message as JSON data to send_message event
-          socketIO.sendMessage(
-              'send_message', json.encode({'message': textController.text}));
-          //Add the message to the list
+          // socketIO.sendMessage(
+          //     'send_message', json.encode({'message': textController.text}));
+          // //Add the message to the list
+          // this.setState(() => messages.add(textController.text));
+          // textController.text = '';
+          // //Scrolldown the list to show the latest message
+          // scrollController.animateTo(
+          //   scrollController.position.maxScrollExtent,
+          //   duration: Duration(milliseconds: 600),
+          //   curve: Curves.ease,
+          // );
+
+          socket2.emit('send_message', json.encode({'message': textController.text}));
           this.setState(() => messages.add(textController.text));
           textController.text = '';
           //Scrolldown the list to show the latest message
@@ -115,6 +147,7 @@ class _ChatPageState extends State<ChatPage> {
             duration: Duration(milliseconds: 600),
             curve: Curves.ease,
           );
+
         }
       },
       child: Icon(
