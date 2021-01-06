@@ -1,7 +1,8 @@
 # chatappsample
 
-A new Flutter application.
+This is Web & Mobile Chat Application, Feel Free if you want to try it.
 
+Buy me some Coffe :D
 ## Getting Started
 
 This project is a starting point for a Flutter application.
