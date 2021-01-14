@@ -1,9 +1,11 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
-import 'package:flutter_socket_io/socket_io_manager.dart';
+// import 'package:flutter_socket_io/socket_io_manager.dart';
 import 'package:socket_io_client/socket_io_client.dart';
+import 'dart:io';
 
 class ChatPage extends StatefulWidget {
   @override
@@ -25,19 +27,22 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     //Initializing the message list
-    messages = List<String>();
+    messages = [];
     //Initializing the TextEditingController and ScrollController
     textController = TextEditingController();
     scrollController = ScrollController();
     // Creating the socket
-
-    socket2 = io('https://chatappsahid.herokuapp.com', <String, dynamic>{
-      'transports': ['websocket'],
-      'autoConnect': true,
-      'extraHeaders': {'foo': 'bar'} // optional
-    });
+    socket2 = io('http://localhost:3000',
+        OptionBuilder()
+            .setTransports(['websocket']) // for Flutter or Dart VM
+            .setExtraHeaders({'foo': 'bar'})
+            .enableAutoConnect()// optional
+            .build());
     socket2.connect();
+    print("http://localhost:3000");
 
+    socket2.onConnectTimeout((data) => print("Cek"));
+    socket2.onConnect((data) => print("Connected"));
     socket2.on('receive_message', (jsonData) {
       Map<String, dynamic> data = json.decode(jsonData);
       this.setState(() => messages.add(data['message']));
@@ -47,7 +52,57 @@ class _ChatPageState extends State<ChatPage> {
         curve: Curves.ease,
       );
     });
-    socket2.onConnect((data) => print("Connected"));
+    // if(kIsWeb){
+    //  socket2 = io('http://localhost:3000',
+    //       OptionBuilder()
+    //           .setTransports(['websocket']) // for Flutter or Dart VM
+    //           .setExtraHeaders({'foo': 'bar'})
+    //           .enableAutoConnect()// optional
+    //           .build());
+    //  socket2.connect();
+    //  print("http://localhost:3000");
+    //
+    //  socket2.onConnectTimeout((data) => print("Cek"));
+    //  socket2.onConnect((data) => print("Connected"));
+    //  socket2.on('receive_message', (jsonData) {
+    //    Map<String, dynamic> data = json.decode(jsonData);
+    //    this.setState(() => messages.add(data['message']));
+    //    scrollController.animateTo(
+    //      scrollController.position.maxScrollExtent,
+    //      duration: Duration(milliseconds: 600),
+    //      curve: Curves.ease,
+    //    );
+    //  });
+    // }else{
+    //   // socket2 = io('https://chatappsahid.herokuapp.com', <String, dynamic>{
+    //   //   'transports': ['websocket'],
+    //   //   'autoConnect': true,
+    //   //   'extraHeaders': {'foo': 'bar'} // optional
+    //   // });
+    //   socket2 = io('https://chatappsahid.herokuapp.com', <String, dynamic>{
+    //     'transports': ['websocket'],
+    //     'autoConnect': true,
+    //     'extraHeaders': {'foo': 'bar'} // optional
+    //   });
+    //
+    //
+    //   socket2.connect();
+    //
+    //   socket2.on('receive_message', (jsonData) {
+    //     Map<String, dynamic> data = json.decode(jsonData);
+    //     this.setState(() => messages.add(data['message']));
+    //     scrollController.animateTo(
+    //       scrollController.position.maxScrollExtent,
+    //       duration: Duration(milliseconds: 600),
+    //       curve: Curves.ease,
+    //     );
+    //   });
+    //   socket2.onConnectTimeout((data) => print("Cek"));
+    //   socket2.onConnect((data) => print("Connected"));
+    // }
+
+
+
 
     // socketIO = SocketIOManager().createSocketIO(
     //   'https://chatappsahid.herokuapp.com/',
